@@ -39,3 +39,17 @@ class NoiseLoader(Dataset):
         noisy_signal = signal + noise
 
         return noisy_signal, noise
+    
+class CustomNoiseDataset(Dataset):
+    def __init__(self, noise_dir):
+        self.noise_dir = noise_dir
+        self.noise_files = os.listdir(noise_dir)
+
+    def __len__(self):
+        return len(self.noise_files) 
+    
+    def __getitem__(self, index):
+        noise_path = os.path.join(self.noise_dir, self.noise_files[index])
+        noise = np.load(noise_path)
+
+        return noise
