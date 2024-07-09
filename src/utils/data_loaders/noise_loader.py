@@ -52,4 +52,7 @@ class CustomNoiseDataset(Dataset):
         noise_path = os.path.join(self.noise_dir, self.noise_files[index])
         noise = np.load(noise_path)
 
+        if len(noise) > 1024:
+            noise = np.interp(np.linspace(0, len(noise) - 1, 1024), np.arange(len(noise)), noise)
+
         return noise

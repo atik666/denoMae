@@ -17,6 +17,9 @@ class CustomSignalDataset(Dataset):
         signal_path = os.path.join(self.signal_dir, self.signal_files[index])
         signal = np.load(signal_path)
 
+        if len(signal) > 1024:
+            signal = np.interp(np.linspace(0, len(signal) - 1, 1024), np.arange(len(signal)), signal)
+
         if self.transform:
             signal = self.transform(signal)
 

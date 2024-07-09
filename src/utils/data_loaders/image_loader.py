@@ -3,6 +3,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms # type: ignore
 from PIL import Image
 import os
+import numpy as np
 
 class CustomImageDataset(Dataset):
     def __init__(self, img_dir, transform=None):
@@ -20,4 +21,4 @@ class CustomImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image
+        return np.array(image)
