@@ -51,6 +51,7 @@ class MultiMAE(nn.Module):
         return x_masked, mask, ids_restore
 
     def forward(self, x1, x2, x3, mask_ratio=0.75):
+
         # Patch embedding
         x1 = self.patch_embed1(x1)
         x2 = self.patch_embed2(x2)

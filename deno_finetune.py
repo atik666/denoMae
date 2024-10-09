@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
-from MultiMAE import MultiMAE
+from DenoMAE import DenoMAE
 import torchvision.models as models
 
-class FineTunedMultiMAE(nn.Module):
+class FineTunedDenoMAE(nn.Module):
     def __init__(self, pretrained_model, num_classes):
         super().__init__()
         self.backbone = pretrained_model
@@ -18,8 +18,8 @@ class FineTunedMultiMAE(nn.Module):
         )
 
     def forward(self, x):
-        # Use only one modality for classification
-        x = self.backbone.patch_embed1(x)
+        # Use only the first modality for classification
+        x = self.backbone.patch_embeds[0](x)
         x = x + self.backbone.pos_embed[:, 1:, :]
         x = self.backbone.encoder(x)
         x = x.mean(dim=1)  # Global average pooling
@@ -40,12 +40,12 @@ learning_rate = 1e-4
 num_classes = 10  # Adjust based on your dataset
 
 # Load pre-trained MultiMAE model
-pretrained_model = MultiMAE(img_size, patch_size, in_chans, embed_dim, encoder_depth, decoder_depth, num_heads)
-pretrained_model.load_state_dict(torch.load('models/multimae_model_dynamic.pth'))
+pretrained_model = DenoMAE(1, img_size, patch_size, in_chans, embed_dim, encoder_depth, decoder_depth, num_heads)
+pretrained_model.load_state_dict(torch.load('models/multimae_dynamic_final_1_100.pth'))
 
 # Create fine-tuned model
-model = FineTunedMultiMAE(pretrained_model, num_classes)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = FineTunedDenoMAE(pretrained_model, num_classes)
+device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
 # Dataset and DataLoader (example using CIFAR-10)

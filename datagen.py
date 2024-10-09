@@ -61,7 +61,7 @@ class DenoMAEDataGenerator(Dataset):
             npy_data = np.interp(x, np.arange(len(npy_data)), npy_data)
         
         npy_data = npy_data.reshape(1, 32, 32).repeat(3, axis=0)
-        npy_tensor = torch.from_numpy(npy_data).float().unsqueeze(0)
+        npy_tensor = torch.from_numpy(npy_data.real).float().unsqueeze(0)
         return F.interpolate(npy_tensor, size=image_size, mode='bilinear', align_corners=False).squeeze(0)
 
     def __getitem__(self, index):
@@ -77,4 +77,8 @@ class DenoMAEDataGenerator(Dataset):
         noiseless_signal = self.preprocess_npy(self.filenames['noiseless_signal'][index], target_length=1024, image_size=self.image_size)
         noise_data = self.preprocess_npy(self.filenames['noise'][index], target_length=1024, image_size=self.image_size)
 
-        return noisy_img, noisy_signal, noiseless_img, noiseless_signal, noise_data
+        return [noisy_img, noisy_signal, noiseless_img, noiseless_signal, noise_data], \
+                [noiseless_img, noiseless_signal, noiseless_img, noiseless_signal, noise_data]
+    
+        # return [noisy_img], \
+        #         [noiseless_img]
