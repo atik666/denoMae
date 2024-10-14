@@ -73,20 +73,21 @@ def main():
             targets = [x.to(device) for x in targets]
 
             # Forward pass
-            reconstructions, _ = model(inputs)
+            reconstructions, masks = model(inputs)
+            print(masks[0].shape)
 
-            # Save images
-            for i in range(len(inputs[0])):
-                # Save input images
-                save_image(inputs[0][i], os.path.join(args.output_dir, "input", f"batch_{batch_idx}_sample_{i}.png"))
+            # # Save images
+            # for i in range(len(inputs[0])):
+            #     # Save input images
+            #     save_image(inputs[0][i], os.path.join(args.output_dir, "input", f"batch_{batch_idx}_sample_{i}.png"))
 
-                # Save reconstructed (output) images
-                save_image(reconstructions[0][i], os.path.join(args.output_dir, "output", f"batch_{batch_idx}_sample_{i}.png"))
+            #     # Save reconstructed (output) images
+            #     save_image(reconstructions[0][i], os.path.join(args.output_dir, "output", f"batch_{batch_idx}_sample_{i}.png"))
 
-                # Save ground truth images
-                save_image(targets[0][i], os.path.join(args.output_dir, "ground_truth", f"batch_{batch_idx}_sample_{i}.png"))
+            #     # Save ground truth images
+            #     save_image(targets[0][i], os.path.join(args.output_dir, "ground_truth", f"batch_{batch_idx}_sample_{i}.png"))
 
-            print(f"Processed batch {batch_idx+1}/{len(test_dataloader)}")
+            # print(f"Processed batch {batch_idx+1}/{len(test_dataloader)}")
 
     print("Evaluation completed. Results saved in:", args.output_dir)
 
