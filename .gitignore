@@ -1,1 +1,4 @@
 *.pth
+models/
+sample_generation/data/
+wandb/

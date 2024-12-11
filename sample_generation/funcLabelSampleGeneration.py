@@ -74,7 +74,7 @@ def generate_constellation(signal: np.ndarray, imageSize: Tuple[int, int], image
     im.save(os.path.join(imageDir, f"{imageName}.png"))
 
 # Main function to generate spectogram images
-def generate_spectogram(signal: np.ndarray, imageSize: Tuple[int, int], imageDir: str, imageName: str) -> None:
+def generate_spectogram(signal: np.ndarray, imageSize: Tuple[int, int], imageDir: str, modType: str, imageName: str) -> None:
     """Generate spectogram image from signal."""
 
     # Define wavelet and scales for CWT
@@ -95,11 +95,11 @@ def generate_spectogram(signal: np.ndarray, imageSize: Tuple[int, int], imageDir
 
     image = Image.fromarray(rgb_image)
     image_resized = image.resize(imageSize, Image.Resampling.LANCZOS)
-    image_resized.save(os.path.join(imageDir, f"{imageName}.png"))
+    image_resized.save(os.path.join(imageDir, modType,  f"{imageName}.png"))
 
 
 # Main function to generate constellation images
-def generate_unlabeled_modality_images(modType: str, samplesPerImage: int, imageNum: int, imageSize: Tuple[int, int], 
+def generate_labeled_modality_images(modType: str, samplesPerImage: int, imageNum: int, imageSize: Tuple[int, int], 
                             set_type: List[str], setPath: str, use_spectogram: bool = True, **kwargs) -> None:
     """Generate constellation images for various modulation types."""
 
@@ -127,8 +127,11 @@ def generate_unlabeled_modality_images(modType: str, samplesPerImage: int, image
 
     # Create directories for each set type
     image_dirs = {genType: os.path.join(setPath, genType) for genType in set_type}
-    for dir_path in image_dirs.values():
-        os.makedirs(dir_path, exist_ok=True)
+    # Add subdirectories for modulation types
+    for genType, base_dir in image_dirs.items():
+        for mod in mod_types.keys():  # Iterate over modulation types
+            mod_dir = os.path.join(base_dir, mod)
+            os.makedirs(mod_dir, exist_ok=True)
 
     generate_image_partial = partial(generate_spectogram if use_spectogram else generate_constellation,
                                      imageSize=imageSize)
@@ -162,12 +165,12 @@ def generate_unlabeled_modality_images(modType: str, samplesPerImage: int, image
         # Generate images and save signals for each set type
         for genType in set_type:
             if genType == 'noiseLessImg':
-                generate_image_partial(signal=signalTx, imageDir=image_dirs[genType], imageName=imageName)
+                generate_image_partial(signal=signalTx, imageDir=image_dirs[genType], modType = modType, imageName=imageName)
             elif genType == 'noisyImg':
-                generate_image_partial(signal=signalRx, imageDir=image_dirs[genType], imageName=imageName)
+                generate_image_partial(signal=signalRx, imageDir=image_dirs[genType], modType = modType, imageName=imageName)
             elif genType in ['noiselessSignal', 'noise', 'noisySignal']:
                 signal_to_save = {'noiselessSignal': signalTx, 'noise': noise, 'noisySignal': signalRx}[genType]
-                np.save(os.path.join(image_dirs[genType], f"{imageName}.npy"), signal_to_save)
+                np.save(os.path.join(image_dirs[genType], modType, f"{imageName}.npy"), signal_to_save)
 
         # Log generated files
         with open(os.path.join(setPath, "files.txt"), 'a') as file:
