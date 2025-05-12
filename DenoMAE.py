@@ -1,12 +1,26 @@
 import torch
-from utils import PatchEmbedding
 from encoderDecoder import TransformerEncoder, TransformerDecoder
 import torch.nn as nn
 from typing import List, Tuple
 
+class PatchEmbedding(nn.Module):
+    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):
+        super().__init__()
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.n_patches = (img_size // patch_size) ** 2
+        
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
+
+    def forward(self, x):
+        x = self.proj(x)  # (B, embed_dim, H', W')
+        x = x.flatten(2)  # (B, embed_dim, H'*W')
+        x = x.transpose(1, 2)  # (B, H'*W', embed_dim)
+        return x
+
 class DenoMAE(nn.Module):
     def __init__(self, num_modalities: int, img_size: int = 224, patch_size: int = 16, 
-                 in_chans: int = 3, embed_dim: int = 768, encoder_depth: int = 12, 
+                 in_chans: int = 3, mask_ratio: float = 0.75, embed_dim: int = 768, encoder_depth: int = 12, 
                  decoder_depth: int = 4, num_heads: int = 12):
         """
         Initialize the DenoMAE model.
@@ -26,6 +40,7 @@ class DenoMAE(nn.Module):
         self.img_size = img_size
         self.patch_size = patch_size
         self.in_chans = in_chans
+        self.mask_ratio = mask_ratio
         self.embed_dim = embed_dim
         self.n_patches = (img_size // patch_size) ** 2
 
@@ -49,7 +64,7 @@ class DenoMAE(nn.Module):
             for _ in range(num_modalities)
         ])
 
-    def random_masking(self, x: torch.Tensor, mask_ratio: float) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def random_masking(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Perform random masking on the input tensor.
 
@@ -64,7 +79,7 @@ class DenoMAE(nn.Module):
                 - Indices for restoring the original order
         """
         N, L, D = x.shape  # batch, length, dim
-        len_keep = int(L * (1 - mask_ratio))
+        len_keep = int(L * (1 - self.mask_ratio))
         
         noise = torch.rand(N, L, device=x.device)  # noise in [0, 1]
         
@@ -80,7 +95,7 @@ class DenoMAE(nn.Module):
 
         return x_masked, mask, ids_restore
 
-    def forward(self, inputs: List[torch.Tensor], mask_ratio: float = 0.75) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
+    def forward(self, inputs: List[torch.Tensor]) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
         """
         Forward pass of the DynamicMultiMAE model.
 
@@ -105,7 +120,7 @@ class DenoMAE(nn.Module):
         for i, x in enumerate(inputs):
             x = self.patch_embeds[i](x)
             x = x + self.pos_embed[:, 1:, :]
-            x_masked, mask, ids_restore = self.random_masking(x, mask_ratio)
+            x_masked, mask, ids_restore = self.random_masking(x)
             masked_embeddings.append(x_masked)
             masks.append(mask)
             ids_restores.append(ids_restore)
@@ -133,7 +148,7 @@ class DenoMAE(nn.Module):
             
             full_rec = torch.zeros((rec.shape[0], self.n_patches, self.patch_size, self.patch_size, self.in_chans), device=rec.device)
             
-            n_keep = int(self.n_patches * (1 - mask_ratio))
+            n_keep = int(self.n_patches * (1 - self.mask_ratio))
             full_rec[:, :n_keep] = rec
             
             full_rec = torch.gather(full_rec, dim=1, index=ids_restores[i].unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).repeat(1, 1, self.patch_size, self.patch_size, self.in_chans))

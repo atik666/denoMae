@@ -1,1 +1,3 @@
 *.pth
+results/
+experiments/

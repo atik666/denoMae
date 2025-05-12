@@ -21,16 +21,18 @@ def parse_args():
     parser.add_argument("--image_size", type=int, nargs=2, default=(224, 224), help="Image size")
     parser.add_argument("--patch_size", type=int, default=16, help="Patch size for the model")
     parser.add_argument("--in_chans", type=int, default=3, help="Number of input channels")
+    parser.add_argument("--mask_ratio", type=float, default=0.75, help="Mask ratio for the model")
     parser.add_argument("--embed_dim", type=int, default=768, help="Embedding dimension")
     parser.add_argument("--encoder_depth", type=int, default=12, help="Depth of the encoder")
     parser.add_argument("--decoder_depth", type=int, default=4, help="Depth of the decoder")
     parser.add_argument("--num_heads", type=int, default=12, help="Number of attention heads")
     parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate")
-    parser.add_argument("--log_dir", type=str, default='runs/multimae', help="Directory for TensorBoard logs")
+    parser.add_argument("--log_dir", type=str, default='runs/denoMAE', help="Directory for TensorBoard logs")
     parser.add_argument("--model_dir", type=str, default='models', help="Directory to save models")
-    parser.add_argument("--num_modality", type=int, default=1, help="Number of modalities")
-    parser.add_argument("--model_name", type=str, default='multimae_model_dynamic_', help="Name of the model file")
+    parser.add_argument("--num_modality", type=int, default=5, help="Number of modalities")
+    parser.add_argument("--model_name", type=str, default='denoMAE_', help="Name of the model file")
+    parser.add_argument("--final_model_name", type=str, default='final_', help="Name of the final model file")
     parser.add_argument("--n_workers", type=int, default=4, help="Number of workers for data loader")
     parser.add_argument("--load", action="store_true", help="Load a previously saved model")
     return parser.parse_args()
@@ -63,12 +65,12 @@ def main():
     ])
 
     # Create dataset and data loader
-    train_dataset = DenoMAEDataGenerator(noisy_image_path=config['train_noisy_image_path'], noiseless_img_path=config['train_noiseless_image_path'], 
+    train_dataset = DenoMAEDataGenerator(args.num_modality, noisy_image_path=config['train_noisy_image_path'], noiseless_img_path=config['train_noiseless_image_path'], 
                                    noisy_signal_path=config['train_noisy_signal_path'], noiseless_signal_path=config['train_noiseless_signal_path'],   
                                 noise_path=config['train_noise_path'], image_size=config['image_size'], transform=transform)
     train_dataloader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=args.n_workers, pin_memory=True)
 
-    test_dataset = DenoMAEDataGenerator(noisy_image_path=config['test_noisy_image_path'], noiseless_img_path=config['test_noiseless_image_path'], 
+    test_dataset = DenoMAEDataGenerator(args.num_modality, noisy_image_path=config['test_noisy_image_path'], noiseless_img_path=config['test_noiseless_image_path'], 
                                    noisy_signal_path=config['test_noisy_signal_path'], noiseless_signal_path=config['test_noiseless_signal_path'],   
                                 noise_path=config['test_noise_path'], image_size=config['image_size'], transform=transform)
     test_dataloader = DataLoader(test_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=args.n_workers, pin_memory=True)
@@ -77,7 +79,7 @@ def main():
     writer = SummaryWriter(args.log_dir)
 
     # Initialize the model
-    model = DenoMAE(args.num_modality, args.image_size[0], args.patch_size, args.in_chans, args.embed_dim, args.encoder_depth, args.decoder_depth, args.num_heads)
+    model = DenoMAE(args.num_modality, args.image_size[0], args.patch_size, args.in_chans, args.mask_ratio, args.embed_dim, args.encoder_depth, args.decoder_depth, args.num_heads)
 
     # Load model if a checkpoint exists
     if args.load and os.path.exists(args.model_dir):
@@ -144,11 +146,6 @@ def main():
         print(f"Epoch [{epoch+1}/{args.num_epochs}], Average Loss: {avg_loss:.4f}")
         writer.add_scalar('Average Training Loss', avg_loss, epoch)
 
-        # # Save the model at different instances
-        # if epoch % 30 == 0:
-        #     torch.save(model.module.state_dict(), os.path.join(args.model_dir, args.model_name+str(args.num_modality)+'_epcoh_'+str(epoch)+'.pth'))
-        #     print(f"Model saved at epoch {epoch+1} with train loss: {avg_loss:.4f}")
-
         # Evaluation
         model.eval()
         with torch.no_grad():
@@ -197,7 +194,7 @@ def main():
 
 
     # Save the final model with a unique name
-    final_model_path = os.path.join(args.model_dir, f'multimae_dynamic_final_{args.num_modality}_{args.num_epochs}.pth')
+    final_model_path = os.path.join(args.model_dir, f'{args.final_model_name}_{args.num_modality}_{args.num_epochs}.pth')
     torch.save(model.module.state_dict(), final_model_path)
     print(f"Final model saved at: {final_model_path}")
 
