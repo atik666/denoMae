@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="denoMAE.jpeg" alt="DenoMAE Logo" width="200"/>
+  <img src="denoMAE.jpeg" alt="DenoMAE Logo" width="300"/>
 </p>
 
 # DenoMAE: A Multimodal Autoencoder for Denoising Modulation Signals
