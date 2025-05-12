@@ -1,4 +1,4 @@
-![DenoMAE Logo](denoMAE.jpeg)
+<img src="denoMAE.jpeg" alt="DenoMAE Logo" width="200"/>
 
 # DenoMAE: A Multimodal Autoencoder for Denoising Modulation Signals
 
@@ -23,7 +23,7 @@ DenoMAE_clean/
 ├── DenoMAE.py               # DenoMAE backbone script
 ├── deno_Main.py             # Pretraining script
 ├── deno_finetune.py         # Fine-tuning script for classification
-├── run_denomae.sh          # Shell script to run pretraining
+├── run_denomae.sh           # Shell script to run pretraining
 ├── run_finetune.sh          # Shell script to run fine-tuning
 ```
 
