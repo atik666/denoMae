@@ -31,7 +31,7 @@ DenoMAE_clean/
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.7++
 - PyTorch 1.7+
 - CUDA-capable GPU (recommended)
 - Additional requirements: numpy, matplotlib, scikit-learn
@@ -175,3 +175,4 @@ labeled/
 ```
 
 This structured data generation approach enables comprehensive training and evaluation of DenoMAE across various modulation schemes and noise conditions, supporting both the pretraining and fine-tuning phases of the model.
+
