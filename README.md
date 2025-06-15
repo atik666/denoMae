@@ -6,6 +6,8 @@
 
 DenoMAE is a novel multimodal autoencoder framework that extends masked autoencoding for denoising and classifying modulation signals. It achieves state-of-the-art accuracy in automatic modulation classification with significantly reduced data requirements, while exhibiting robust performance across varying Signal-to-Noise Ratios (SNRs).
 
+[Paper on IEEE Xplore](https://ieeexplore.ieee.org/document/11005616)
+
 ## Project Overview
 
 DenoMAE consists of two main phases:
